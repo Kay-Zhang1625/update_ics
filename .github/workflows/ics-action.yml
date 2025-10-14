@@ -1,0 +1,48 @@
+name: Auto Update Course Calendar
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 每天凌晨1點(UTC)自動執行
+  workflow_dispatch: # 允許手動執行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      CRAWLER_USERNAME: ${{ secrets.ICS_GOODTIME_USERNAME }}
+      CRAWLER_PASSWORD: ${{ secrets.ICS_GOODTIME_PASSWORD }}
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install ChromeDriver and webdriver-manager
+        run: |
+          pip install webdriver-manager
+
+      - name: Run course spider script
+        run: python spider.py
+
+      - name: Generate ICS calendar
+        run: python gen_ics.py
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
