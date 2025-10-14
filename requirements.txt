@@ -1,0 +1,2 @@
+selenium==4.36.0
+icalendar==6.3.1
