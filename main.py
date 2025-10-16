@@ -1,4 +1,4 @@
-from spider_goodtime import update_json_with_crawler
+from spider_goodtime import exe_crawler, update_json_with_crawler
 from gen_ics import sync_ics_with_json
 
 json_file = "events.json"
