@@ -1,7 +1,7 @@
 name: Auto Update Course Calendar
 
 on:
-  # schedule:
+  schedule:
     - cron: '0 14 */2 * *'  # 奇數日UTC+8下午十點自動執行
   workflow_dispatch: # 允許手動執行
 
