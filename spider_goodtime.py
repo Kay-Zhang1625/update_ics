@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # 載入帳號密碼
 USERNAME = os.environ.get("CRAWLER_USERNAME")
@@ -99,7 +100,8 @@ def update_json_with_crawler(json_path, crawler_events):
         with open(json_path, "r", encoding="utf-8") as f:
             json_events = json.load(f)
 
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("Asia/Taipei"))
+        print("taipei timezone:", now)
         future_json_events = [e for e in json_events if datetime.strptime(f"{e['date']} {e['start_time']}", '%Y-%m-%d %H:%M') > now]
         future_json_keys = set(event_key(e) for e in future_json_events)
         crawler_keys = set(event_key(e) for e in crawler_events)
