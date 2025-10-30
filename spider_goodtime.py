@@ -7,7 +7,12 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+# 取得時間與時區
+tz = ZoneInfo("Asia/Taipei")
+now = datetime.now(timezone.utc)
 
 # 載入帳號密碼
 USERNAME = os.environ.get("CRAWLER_USERNAME")
@@ -84,6 +89,11 @@ def exe_crawler(wd, USERNAME, PASSWORD, url):
     finally:
         wd.quit()
 
+def parse_event_to_utc(e):
+    local = datetime.strptime(f"{e['date']} {e['start_time']}", '%Y-%m-%d %H:%M')
+    local = local.replace(tzinfo=tz)
+    return local.astimezone(timezone.utc)
+
 def event_key(event):
     return f"{event['date']}|{event['start_time']}|{event['title']}"
 
@@ -99,8 +109,7 @@ def update_json_with_crawler(json_path, crawler_events):
         with open(json_path, "r", encoding="utf-8") as f:
             json_events = json.load(f)
 
-        now = datetime.now()
-        future_json_events = [e for e in json_events if datetime.strptime(f"{e['date']} {e['start_time']}", '%Y-%m-%d %H:%M') > now]
+        future_json_events = [e for e in json_events if parse_event_to_utc(e) > now]
         future_json_keys = set(event_key(e) for e in future_json_events)
         crawler_keys = set(event_key(e) for e in crawler_events)
         new_events = [e for e in crawler_events if event_key(e) not in future_json_keys]
@@ -111,7 +120,7 @@ def update_json_with_crawler(json_path, crawler_events):
         # 1. 先判斷取消（replace）
         if cancelled_events:
             # 只保留歷史事件 + crawler_events
-            history_events = [e for e in json_events if datetime.strptime(f"{e['date']} {e['start_time']}", '%Y-%m-%d %H:%M') <= now]
+            history_events = [e for e in json_events if parse_event_to_utc(e) <= now]
             json_events = history_events + crawler_events
             updated = True
             sync_mode = "replace"
